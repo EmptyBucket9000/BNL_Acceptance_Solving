@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.integrate import quad
 
-
 Ne = 2153 # Number of particles
 N = 1000 # 
 T = 1/10 # 
@@ -21,8 +20,8 @@ w = ((6/5)*np.pi)*10**6 # (rad/s) Oscillating frequency
     
 phi_x = -np.pi/8 # (rad) Phase-offset of x-position mean oscillations
 phi_sigma = np.pi/2 # (rad) Phase-offset of beam distribution width oscillations
-x_mid = 0 # (m) Middle of the acceptance function
-x_0 = 0 # (m) Initial beam distribution mean
+x_mid = 0.1 # (m) Middle of the acceptance function
+x_0 = 0.1 # (m) Initial beam distribution mean
 sigma_0 = 14.5*10**-3 # (m) Initial beam distribution width
 D_0 = 80*10**-3 # (m) Maximum physical width of beam
 A_x = 2*10**-3 # (m) Initial beam distribution mean oscillation amplitude
@@ -43,10 +42,10 @@ def main():
     
 #    xlinear(noplot=0)
 #    sigmalinear(noplot=0)
-    combinedLinear()
+#    combinedLinear()
 #    
 #    xquad(noplot=0)
-#    sigmaquad(noplot=0)
+    sigmaquad(noplot=0)
 #    combinedQuad()
 
 def xlinear(noplot):
@@ -73,7 +72,7 @@ def xlinear(noplot):
         
         # Finds the new normalization variable
         temp = quad(integranda, ll[[i]], ul[[i]], args=(x_B[i],sigma))
-        a[i] = N/(temp[0])
+        a[i] = Ne/(temp[0])
         
         # Integrates over x to find the acceptance
         temp1 = quad(integrandADlinear, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma))
@@ -84,7 +83,7 @@ def xlinear(noplot):
         
         i = i + 1
     
-    title = "Postion vs. Time"
+    title = "Position vs. Time"
     stitle = "Gaussian Distribution: Linear Position"
     ylabel = "$x_m$ (m)"
     save_title = "GF_Linear_Position"
@@ -112,7 +111,7 @@ def sigmalinear(noplot):
     while i < len(t):
         
         temp1 = quad(integranda, ll, ul, args=(x_B,sigma[i]))
-        a[i] = N/(temp1[0])
+        a[i] = Ne/(temp1[0])
         
         temp2 = quad(integrandADlinear, ll, ul, args=(a[i],x_B,sigma[i]))
         AD[i] = temp2[0]
@@ -150,16 +149,17 @@ def combinedLinear():
     while i < len(t):
         
         temp1 = quad(integranda, ll[[i]], ul[[i]], args=(x_B[i],sigma[i]))
-        a[i] = N/temp1[0]
+        a[i] = Ne/temp1[0]
         
         # This section verifies the distribution is valid (Not updated for Gaussian)
 #        tn = nn/100
-#        print(tn)
-        
+##        print(tn)
+#        
 #        if tn.is_integer():
 #            x = np.linspace(ll[[i]],ul[[i]],1000)
 #            plt.figure(nn*10)
-#            plt.plot(x,a[i]*(-(x-x_B[i])**2 + (sigma[i]/2)**2))
+#            plt.plot(x,(a[i]*(np.sqrt(2*np.pi*sigma[i]**2)**(-1))*np.exp(-((x-x_B[i])**2)/(2*sigma[i]**2))))
+#            
 #            plt.xlim(ll[[i]],ul[[i]])
 #        
 #        nn = nn + 1
@@ -168,8 +168,8 @@ def combinedLinear():
         temp2 = quad(integrandADlinear, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
         AD[i] = temp2[0]
         
-#        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
-#        print(Nt[0])
+        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
+        print(Nt[0])
         
         i = i + 1
         
@@ -209,7 +209,7 @@ def xquad(noplot):
         
         i = i + 1
     
-    title = "Postion vs. Time"
+    title = "Position vs. Time"
     ylabel = "$x_m$ (m)"
     save_title = "GF_Quad_Position"
     stitle = "Gaussian Distribution: Quadratic Position"
@@ -237,10 +237,10 @@ def sigmaquad(noplot):
     
     while i < len(t):
         
-        temp1 = quad(integranda, ll, ul, args=(x_B,sigma[i]), epsabs=1.49e-15, epsrel=1.49e-15)
+        temp1 = quad(integranda, ll, ul, args=(x_B,sigma[i]))
         a[i] = Ne/temp1[0]
         
-        temp2 = quad(integrandADquad, ll, ul, args=(a[i],x_B,sigma[i]), epsabs=1.49e-15, epsrel=1.49e-15)
+        temp2 = quad(integrandADquad, ll, ul, args=(a[i],x_B,sigma[i]))
         AD[i] = temp2[0]
         
 #        Nt = quad(integrandN, ll, ul, args=(a[i],x_B,sigma[i]))
@@ -273,10 +273,10 @@ def combinedQuad():
     
     while i < len(t):
         
-        temp = quad(integranda, ll[[i]], ul[[i]], args=(x_B[i],sigma[i]), epsabs=1.49e-15, epsrel=1.49e-15)
+        temp = quad(integranda, ll[[i]], ul[[i]], args=(x_B[i],sigma[i]))
         a[i] = Ne/temp[0]
         
-        temp = quad(integrandADquad, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]), epsabs=1.49e-15, epsrel=1.49e-15)
+        temp = quad(integrandADquad, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
         AD[i] = temp[0]
         
 #        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],D[i]))
@@ -306,7 +306,9 @@ def integrandADlinear(x, a, x_B, sigma):
     
 # Used to find the acceptancs for the quadratic term
 def integrandADquad(x, a, x_B, sigma):
-    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2)))*(k_1*x**2)
+#    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2)))*(k_1*x**2)
+    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2))) * \
+            (((x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))*k_1
     
 def plotSingle(AD,data,ylabel,title,save_title,stitle):
 

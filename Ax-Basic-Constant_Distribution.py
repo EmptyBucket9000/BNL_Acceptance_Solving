@@ -10,33 +10,47 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.integrate import quad
 
-
-N = 2000
-T = 1/1000
+Ne = 2153
+N = 1000
+T = 1/10
 TT = 3
 t = np.linspace(0.0, N*T, N)
 tf = np.linspace(0.0,1.0/(2.0*T),N/2)
-w = 2.0*1*np.pi
+w = ((6/5)*np.pi)*10**6 # (rad/s) Oscillating frequency 
     
-phi_x = np.pi
+phi_x = -np.pi/8 # (rad) Phase-offset of x-position mean oscillations
+phi_sigma = np.pi/2 # (rad) Phase-offset of beam distribution width oscillations
+x_mid = .1 # (m) Middle of the acceptance function
+x_0 = .1 # (m) Initial beam distribution mean
+sigma_0 = 14.5*10**-3 # (m) Initial beam distribution width
+D_0 = 80*10**-3 # (m) Maximum physical width of beam
+A_x = 2*10**-3 # (m) Initial beam distribution mean oscillation amplitude
+A_sigma = 5.5*10**-3 # (m) Initial beam distribution width oscillation amplitude
+
+k_0 = 100 # () Linear acceptance function constant
+k_1 = 100 # () Quadratic acceptance function constant
+    
+#phi_x = np.pi
 phi_D = 0
-x_mid = 10
-x_0 = 10
-A_x = 2
-D_0 = 3
-A_D = 2
-k_1 = 0.05
+#x_mid = 10
+#x_0 = 10
+#A_x = 2
+#D_0 = 3
+#A_D = 2
+#k_1 = 0.05
 
 def main():
 #    xlinear(noplot=0)
 #    sigmalinear(noplot=0)
-#    combinedLinear()    
+    combinedLinear()    
 #    
 #    xquad(noplot=0)
 #    sigmaquad(noplot=0)
-    combinedQuad()
+#    combinedQuad()
 
 def xlinear(noplot):
+
+    # Initialize variables
     
     AD = np.zeros(len(t))
 
@@ -56,7 +70,7 @@ def xlinear(noplot):
         
         a[i] = N/(ul[i] - ll[i])
         
-        temp1 = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B[i],D))
+        temp1 = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B[i]))
         AD[i] = temp1[0]
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B[i],D))
@@ -79,7 +93,7 @@ def sigmalinear(noplot):
     AD = np.zeros(len(t))    
     a = np.zeros(len(t))
 
-    D = D_0 + A_D*np.cos(w*t + phi_D)
+    D = (D_0-A_sigma) + (A_sigma)*np.cos(w*t + phi_D)
     
     x_B = None
     x_B = x_0
@@ -93,7 +107,7 @@ def sigmalinear(noplot):
         
         a[i] = N/(ul[i] - ll[i])
         
-        temp1 = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B,D[i]))
+        temp1 = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B))
         AD[i] = temp1[0]
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B,D[i]))
@@ -117,7 +131,7 @@ def combinedLinear():
     a = np.zeros(len(t))
 
     x_B = x_0 + A_x*np.cos(w*t + phi_x)
-    D = D_0 + A_D*np.cos(w*t + phi_D)
+    D = (D_0-A_sigma) + (A_sigma)*np.cos(w*t + phi_D)
     
     ll = x_B - D/2
     ul = x_B + D/2
@@ -128,7 +142,7 @@ def combinedLinear():
         
         a[i] = N/(ul[i] - ll[i])
         
-        temp = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
+        temp = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B[i]))
         AD[i] = temp[0]
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
@@ -150,7 +164,7 @@ def xquad(noplot):
     x_B = x_0 + A_x*np.cos(w*t + phi_x)
     
     D = None
-    D= D_0
+    D = D_0
     
     ul = x_B + D/2
     ll = x_B - D/2
@@ -163,8 +177,12 @@ def xquad(noplot):
         
         a[i] = N/(ul[i] - ll[i])
         
-        temp = quad(integrandADquad, ll[i], ul[i], args=(a[i],x_B[i],D))
+        temp = quad(integrandADquad, ll[i], ul[i], args=(a[i],x_B[i]))
         AD[i] = temp[0]
+        
+#    return a*k_1*x**2
+#    return a*((-(x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))
+#    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2)))*(k_1*x**2)
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B[i],D))
 #        print(x_B[i])
@@ -190,15 +208,14 @@ def xquad(noplot):
 def sigmaquad(noplot):
     
     AD = np.zeros(len(t))    
+    a = np.zeros(len(t))
 
-    D = D_0 + A_D*np.cos(w*t + phi_D)
+    D = (D_0-A_sigma) + (A_sigma)*np.cos(w*t + phi_D)
     
     x_B = None
     x_B = x_0
     
     ul = x_B + D/2
-    
-    a = np.zeros(len(t))
     ll = x_B - D/2
     
     i = 0  
@@ -206,8 +223,8 @@ def sigmaquad(noplot):
         
         a[i] = N/(ul[i] - ll[i])
         
-        temp2 = quad(integrandADquad, ll[i], ul[i], args=(a[i],x_B,D[i]))
-        AD[i] = temp2[0]
+        temp = quad(integrandADquad, ll[i], ul[i], args=(a[i],x_B))
+        AD[i] = temp[0]
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B,D[i]))
 #        print(x_B)
@@ -236,7 +253,7 @@ def combinedQuad():
     a = np.zeros(len(t))
 
     x_B = x_0 + A_x*np.cos(w*t + phi_x)
-    D = D_0 + A_D*np.cos(w*t + phi_D)
+    D = (D_0-A_sigma) + (A_sigma)*np.cos(w*t + phi_D)
     
     ll = x_B - D/2
     ul = x_B + D/2
@@ -247,7 +264,7 @@ def combinedQuad():
         
         a[i] = N/(ul[i] - ll[i])
         
-        temp = quad(integrandADquad, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
+        temp = quad(integrandADquad, ll[i], ul[i], args=(a[i],x_B[i]))
         AD[i] = temp[0]
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
@@ -268,12 +285,11 @@ def combinedQuad():
 def integrandN(x, a, x_B, D):
     return a
     
-def integrandADlinear(x, a, x_B, D):
-    return a*(k_1*x)
+def integrandADlinear(x, a, x_B):
+    return a*(x_B)*k_0*x
     
-def integrandADquad(x, a, x_B, D):
-#    return a*(((-(x - x_mid)**2 + (x_mid)**2))/(x_mid)**2)
-    return a*((-(x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))
+def integrandADquad(x, a, x_B):
+    return a*(x_B)*k_1*(x-x_mid)**2
     
 def plotSingle(AD,data,ylabel,title,save_title,stitle):
 
