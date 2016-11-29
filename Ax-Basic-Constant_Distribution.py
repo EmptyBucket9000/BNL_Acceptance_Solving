@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.integrate import quad
 
+save_plots = 0
+
 Ne = 2153
 N = 1000
 T = 1/10
@@ -42,11 +44,11 @@ phi_D = 0
 def main():
 #    xlinear(noplot=0)
 #    sigmalinear(noplot=0)
-    combinedLinear()    
+#    combinedLinear()    
 #    
 #    xquad(noplot=0)
 #    sigmaquad(noplot=0)
-#    combinedQuad()
+    combinedQuad()
 
 def xlinear(noplot):
 
@@ -286,10 +288,12 @@ def integrandN(x, a, x_B, D):
     return a
     
 def integrandADlinear(x, a, x_B):
-    return a*(x_B)*k_0*x
+#    return a*x_B*k_0*x
+    return a*k_0*x
     
 def integrandADquad(x, a, x_B):
-    return a*(x_B)*k_1*(x-x_mid)**2
+#    return a*x_B*k_1*(x-x_mid)**2
+    return a*k_1*(x-x_mid)**2
     
 def plotSingle(AD,data,ylabel,title,save_title,stitle):
 
@@ -299,22 +303,24 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
     n = n + 1
     
-    plt.subplot(2,1,1)
+    plot1 = plt.subplot(2,1,1)
     plt.plot(t,data)
     plt.ylabel("%s"%(ylabel))
     plt.title("%s"%(title))
     
-    plt.subplot(2,1,2)
+    plot2 = plt.subplot(2,1,2)
     plt.plot(t,AD)
     plt.ylabel("$N_D$")
     plt.xlabel("Time")
     plt.title("Particles Detected vs. Time")
     plt.tight_layout()
+    plot1.locator_params(axis='y',nbins=5)
+    plot2.locator_params(axis='y',nbins=5)
     
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
-    
-    plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
@@ -330,37 +336,42 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight',
+                    dpi=300)
     
 def plotCombined(AD,save_title,datax,datasig,stitle):
-
     n = 1
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
     n = n + 1
     
-    plt.subplot(3,1,1)
+    plot1 = plt.subplot(3,1,1)
     plt.plot(t,datax)
     plt.ylabel("$N_D$")
     plt.title("Particles Detected from changing $x_m$")
     
-    plt.subplot(3,1,2)
+    plot2 = plt.subplot(3,1,2)
     plt.plot(t,datasig)
     plt.ylabel("$N_D$")
     plt.title("Particles Detected from changing $\sigma$")
     
-    plt.subplot(3,1,3)
+    plot3 = plt.subplot(3,1,3)
     plt.plot(t,AD)
     plt.ylabel("$N_D$")
     plt.xlabel("Time")
     plt.title("Particles Detected vs. Time")
     plt.tight_layout()
+    plot1.locator_params(axis='y',nbins=5)
+    plot2.locator_params(axis='y',nbins=5)
+    plot3.locator_params(axis='y',nbins=5)
     
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
@@ -377,6 +388,7 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
     
 main()

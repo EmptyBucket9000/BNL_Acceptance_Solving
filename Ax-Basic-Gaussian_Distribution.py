@@ -10,13 +10,14 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.integrate import quad
 
+save_plots = 1
+
 Ne = 2153 # Number of particles
 N = 1000 # 
 T = 1/10 # 
 t = np.linspace(0.0, N*T, N)
-tf = np.linspace(0.0,1.0/(2.0*T),N/2)
-w = ((6/5)*np.pi)*10**6 # (rad/s) Oscillating frequency 
-#w = 2*np.pi
+tf = np.linspace(0.0,1/(2.0*T),N/2)
+w = ((6/5)*np.pi)*10**6 # (rad/s) Oscillating frequency
     
 phi_x = -np.pi/8 # (rad) Phase-offset of x-position mean oscillations
 phi_sigma = np.pi/2 # (rad) Phase-offset of beam distribution width oscillations
@@ -45,14 +46,15 @@ def main():
 #    combinedLinear()
 #    
 #    xquad(noplot=0)
-    sigmaquad(noplot=0)
-#    combinedQuad()
+#    sigmaquad(noplot=0)
+    combinedQuad()
 
 def xlinear(noplot):
 
     # Initialize variables    
     
     AD = np.zeros(len(t))
+    a = np.zeros(len(t))
 
     x_B = x_0 + A_x*np.cos(w*t + phi_x)
     
@@ -60,8 +62,6 @@ def xlinear(noplot):
     D = D_0
     sigma = None
     sigma = sigma_0
-    
-    a = np.zeros(len(t))
     
     ul = x_B + D/2
     ll = x_B - D/2
@@ -76,7 +76,7 @@ def xlinear(noplot):
         
         # Integrates over x to find the acceptance
         temp1 = quad(integrandADlinear, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma))
-        AD[i] = temp1[0]
+        AD[i] = np.copy(temp1[0])
         
 #        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma))
 #        print(Nt[0])
@@ -95,7 +95,7 @@ def xlinear(noplot):
     
 def sigmalinear(noplot):
     
-    AD = np.zeros(len(t))    
+    AD = np.zeros(len(t))
     a = np.zeros(len(t))
 
     sigma = sigma_0 + A_sigma*np.cos(w*t + phi_sigma)
@@ -114,7 +114,7 @@ def sigmalinear(noplot):
         a[i] = Ne/(temp1[0])
         
         temp2 = quad(integrandADlinear, ll, ul, args=(a[i],x_B,sigma[i]))
-        AD[i] = temp2[0]
+        AD[i] = np.copy(temp2[0])
         
 #        Nt = quad(integrandN, ll, ul, args=(a[i],x_B,sigma[i]))
 #        print(Nt[0])
@@ -166,10 +166,10 @@ def combinedLinear():
         ################# End Verification #################
         
         temp2 = quad(integrandADlinear, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
-        AD[i] = temp2[0]
+        AD[i] = np.copy(temp2[0])
         
-        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
-        print(Nt[0])
+#        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
+#        print(Nt[0])
         
         i = i + 1
         
@@ -202,7 +202,7 @@ def xquad(noplot):
         a[i] = Ne/temp1[0]
         
         temp2 = quad(integrandADquad, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma))
-        AD[i] = temp2[0]
+        AD[i] = np.copy(temp2[0])
         
 #        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma))
 #        print(Nt[0])
@@ -221,7 +221,8 @@ def xquad(noplot):
     
 def sigmaquad(noplot):
     
-    AD = np.zeros(len(t))    
+    AD = np.zeros(len(t))
+#    AD2 = np.zeros(len(t))
 
     sigma = sigma_0 + A_sigma*np.cos(w*t + phi_sigma)
     
@@ -233,7 +234,7 @@ def sigmaquad(noplot):
     
     a = np.zeros(len(t))
     
-    i = 0  
+    i = 0
     
     while i < len(t):
         
@@ -241,7 +242,9 @@ def sigmaquad(noplot):
         a[i] = Ne/temp1[0]
         
         temp2 = quad(integrandADquad, ll, ul, args=(a[i],x_B,sigma[i]))
-        AD[i] = temp2[0]
+        AD[i] = np.copy(temp2[0])
+        
+#        AD2[i] = np.cos(w*t[i])**5 + np.cos(w*t[i])**4
         
 #        Nt = quad(integrandN, ll, ul, args=(a[i],x_B,sigma[i]))
 #        print(Nt[0])
@@ -255,6 +258,7 @@ def sigmaquad(noplot):
     
     if noplot==0:
         plotSingle(AD,sigma,ylabel,title,save_title,stitle)
+#        plotSingle(AD2,sigma,ylabel,title,save_title,stitle)
     
     return AD
     
@@ -268,7 +272,7 @@ def combinedQuad():
     
     ll = x_B - D_0/2
     ul = x_B + D_0/2
-    
+
     i = 0
     
     while i < len(t):
@@ -277,7 +281,7 @@ def combinedQuad():
         a[i] = Ne/temp[0]
         
         temp = quad(integrandADquad, ll[[i]], ul[[i]], args=(a[i],x_B[i],sigma[i]))
-        AD[i] = temp[0]
+        AD[i] = np.copy(temp[0])
         
 #        Nt = quad(integrandN, ll[[i]], ul[[i]], args=(a[i],x_B[i],D[i]))
 #        print(Nt[0])
@@ -294,21 +298,25 @@ def combinedQuad():
 # Finds the normalizing constant for the distribution function to ensure the
 # total number of particles remains the same
 def integranda(x, x_B, sigma):
-    return (np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2))
+    return (np.sqrt(2*np.pi*sigma**2)**(-1)) * \
+            np.exp(-((x-x_B)**2)/(2*sigma**2))
     
 # Finds the total number of particles (used for verification only)
 def integrandN(x, a, x_B, sigma):
-    return a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2))
+    return a*(np.sqrt(2*np.pi*sigma**2)**(-1)) * \
+            np.exp(-((x-x_B)**2) / (2*sigma**2))
     
 # Used to find the acceptance for the linear term
 def integrandADlinear(x, a, x_B, sigma):
-    return a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2))*(k_0*x)
+    return a*(np.sqrt(2*np.pi*sigma**2)**(-1)) * \
+            np.exp(-((x-x_B)**2) / (2*sigma**2))*(k_0*x)
     
 # Used to find the acceptancs for the quadratic term
 def integrandADquad(x, a, x_B, sigma):
-#    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2)))*(k_1*x**2)
-    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2)/(2*sigma**2))) * \
-            (((x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))*k_1
+#    return (a / np.sqrt(2*np.pi*sigma**2) *
+#            np.exp(-((x-x_B)**2) / (2*sigma**2)))*(k_1 * x**2)
+    return (a*(np.sqrt(2*np.pi*sigma**2)**(-1))*np.exp(-((x-x_B)**2) / 
+            (2*sigma**2))) * (((x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))*k_1
     
 def plotSingle(AD,data,ylabel,title,save_title,stitle):
 
@@ -333,7 +341,8 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
@@ -342,13 +351,16 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     Af = fft(AD)
     plt.plot(tf[1:], 2/N * np.abs(Af[:N/2])[1:])
     plt.xlim(0,5)
+#    plt.ylim(0,0.1)
     plt.xlabel("Frequency")
     plt.title("DFT of Particles Detected")
     
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight',
+                    dpi=300)
     
 def plotCombined(AD,save_title,datax,datasig,stitle):
 
@@ -358,27 +370,31 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
     n = n + 1
     
-    plt.subplot(3,1,1)
+    plot1 = plt.subplot(3,1,1)
     plt.plot(t,datax)
     plt.ylabel("$N_D$")
     plt.title("Particles Detected from changing $x_m$")
     
-    plt.subplot(3,1,2)
+    plot2 = plt.subplot(3,1,2)
     plt.plot(t,datasig)
     plt.ylabel("$N_D$")
     plt.title("Particles Detected from changing $\sigma$")
     
-    plt.subplot(3,1,3)
+    plot3 = plt.subplot(3,1,3)
     plt.plot(t,AD)
     plt.ylabel("$N_D$")
     plt.xlabel("Time")
     plt.title("Particles Detected vs. Time")
     plt.tight_layout()
+    plot1.locator_params(axis='y',nbins=5)
+    plot2.locator_params(axis='y',nbins=5)
+    plot3.locator_params(axis='y',nbins=5)
     
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
@@ -387,13 +403,15 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     Af = fft(AD)
     plt.plot(tf[1:], 2/N * np.abs(Af[:N/2])[1:])
     plt.xlim(0,5)
-#    plt.ylim(0,2)
+#    plt.ylim(0,0.5)
     plt.xlabel("Frequency")
     plt.title("DFT of Particles Detected")
     
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight',
+                    dpi=300)
     
 main()

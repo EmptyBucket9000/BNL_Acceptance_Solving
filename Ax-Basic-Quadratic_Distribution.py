@@ -28,8 +28,10 @@ D_0 = 80*10**-3 # (m) Maximum physical width of beam
 A_x = 2*10**-3 # (m) Initial beam distribution mean oscillation amplitude
 A_sigma = 5.5*10**-3 # (m) Initial beam distribution width oscillation amplitude
 
-k_0 = 1 # () Linear acceptance function constant
+k_0 = 10 # () Linear acceptance function constant
 k_1 = 1 # () Quadratic acceptance function constant
+
+save_plots = 1
     
 #phi_x = 0
 phi_D = 0
@@ -43,11 +45,11 @@ phi_D = 0
 def main():
 #    xlinear(noplot=0)
 #    sigmalinear(noplot=0)
-    combinedLinear()    
+#    combinedLinear()    
 #    
 #    xquad(noplot=0)
 #    sigmaquad(noplot=0)
-#    combinedQuad()
+    combinedQuad()
 
 def xlinear(noplot):
     
@@ -344,7 +346,8 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/QF_%s.png'%(save_title), bbox_inches='tight', dpi=300)
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
@@ -360,7 +363,8 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/QF_%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
     
 def plotCombined(AD,save_title,datax,datasig,stitle):
 
@@ -370,27 +374,32 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
     n = n + 1
     
-    plt.subplot(3,1,1)
+    plot1 = plt.subplot(3,1,1)
     plt.plot(t,datax)
     plt.ylabel("$N_D$")
     plt.title("Particles Detected from changing $x_m$")
     
-    plt.subplot(3,1,2)
+    plot2 = plt.subplot(3,1,2)
     plt.plot(t,datasig)
     plt.ylabel("$N_D$")
     plt.title("Particles Detected from changing $\sigma$")
     
-    plt.subplot(3,1,3)
+    plot3 = plt.subplot(3,1,3)
     plt.plot(t,AD)
     plt.ylabel("$N_D$")
     plt.xlabel("Time")
     plt.title("Particles Detected vs. Time")
     plt.tight_layout()
     
+    plot1.locator_params(axis='y',nbins=5)
+    plot2.locator_params(axis='y',nbins=5)
+    plot3.locator_params(axis='y',nbins=5)
+    
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/QF_%s.png'%(save_title), bbox_inches='tight', dpi=300)
 
     fig = plt.figure(n)
     st = fig.suptitle("%s"%stitle, fontsize="x-large")
@@ -408,6 +417,8 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     st.set_y(1.0)
     fig.subplots_adjust(top=0.85)
     
-    plt.savefig('Plots/%s-DFT.png'%(save_title), bbox_inches='tight', dpi=300)
+    if save_plots == 1:
+        plt.savefig('Plots/QF_%s-DFT.png'%(save_title), bbox_inches='tight',
+                    dpi=300)
     
 main()
