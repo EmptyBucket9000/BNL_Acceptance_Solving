@@ -10,8 +10,11 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 from scipy.integrate import quad
 
+save_plots = 0
+through_contact = 1
+fit = 2 # 1 for linear, 2 for quadratic
 
-Ne = 2153
+Ne = 21530
 N = 1000
 T = 1/10
 TT = 3
@@ -22,16 +25,30 @@ w = ((6/5)*np.pi)*10**6 # (rad/s) Oscillating frequency
 phi_x = -np.pi/8 # (rad) Phase-offset of x-position mean oscillations
 phi_sigma = np.pi/2 # (rad) Phase-offset of beam distribution width oscillations
 x_mid = 0.1 # (m) Middle of the acceptance function
-x_0 = 0.1 # (m) Initial beam distribution mean
+x_0 = 0 # (m) Initial beam distribution mean
 sigma_0 = 14.5*10**-3 # (m) Initial beam distribution width
 D_0 = 80*10**-3 # (m) Maximum physical width of beam
 A_x = 2*10**-3 # (m) Initial beam distribution mean oscillation amplitude
 A_sigma = 5.5*10**-3 # (m) Initial beam distribution width oscillation amplitude
 
-k_0 = 10 # () Linear acceptance function constant
-k_1 = 1 # () Quadratic acceptance function constant
+# For through_contact or no_through_contact fit
 
-save_plots = 1
+if through_contact == 1:
+    if fit == 1:
+        k_0 = 0.762043      # () Constant term
+        k_1 = -0.5931      # () Linear term
+    if fit == 2:
+        k_0 = 0.760101      # () Constant term
+        k_1 = -0.609356      # () Linear term
+        k_2 = 7.97297     # () Quadratic term
+else:
+    if fit == 1:
+        k_0 = 0.793666      # () Constant term
+        k_1 = -1.277      # () Linear term
+    if fit == 2:
+        k_0 = 0.790605      # () Constant term
+        k_1 = -1.31183      # () Linear term
+        k_2 = 13.1419     # () Quadratic term
     
 #phi_x = 0
 phi_D = 0
@@ -177,7 +194,10 @@ def combinedLinear():
 #        nn = nn + 1
         ################# End Verification #################
         
-        temp = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
+#        temp = quad(integrandADlinear, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
+#        AD[i] = temp[0]
+        
+        temp = quad(integrandADlinearFull, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
         AD[i] = temp[0]
         
 #        Nt = quad(integrandN, ll[i], ul[i], args=(a[i],x_B[i],D[i]))
@@ -311,17 +331,21 @@ def integrandN(x, a, x_B, D):
     return a*((x - x_B)**2 + (D/2)**2)
     
 def integrandADlinear(x, a, x_B,D):
-    return a*(((x - x_B)**2) + (D/2)**2)*(k_0)*(x)
+    return a*(((x - x_B)**2) + (D/2)**2)*((k_1)*(x) + k_0)
 #    return a*x_B**2*k_0*x
+    
+def integrandADlinearFull(x, a, x_B,D):
+    return (a*((x - x_B)**2 + (D/2)**2)) * (k_0 + k_1*x)
     
 def integrandADlinearSigma(x, a, x_B,D):
 #    return a*(-((x - x_B)**2) + (D/2)**2)*(k_1*np.abs(x))
-    return a*(-((x - x_B)**2) + (D/2)**2)*(k_1*np.abs(x))
+    return a*(-((x - x_B)**2) + (D/2)**2)*(k_1*x)
     
 def integrandADquad(x, a, x_B,D):
-    return (a*((x - x_B)**2 + (D/2)**2)) * \
-            (((x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))*k_1
-#    return (a*((x - x_B)**2 + (D/2)**2)) * x**2 * k_1
+#    return (a*((x - x_B)**2 + (D/2)**2)) * \
+#            (((x - x_mid)**2 + (x_mid)**2)/((x_mid)**2))*k_2
+    return (a*((x - x_B)**2 + (D/2)**2)) * (k_0 + k_1*x + k_2*x**2)
+    
     
 def plotSingle(AD,data,ylabel,title,save_title,stitle):
 
@@ -339,7 +363,7 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     plt.subplot(2,1,2)
     plt.plot(t,AD)
     plt.ylabel("$N_D$")
-    plt.xlabel("Time")
+    plt.xlabel("Time ($\mu$s)")
     plt.title("Particles Detected vs. Time")
     plt.tight_layout()
     
@@ -356,8 +380,8 @@ def plotSingle(AD,data,ylabel,title,save_title,stitle):
     plt.subplot(1,1,1)
     Af = fft(AD)
     plt.plot(tf[1:], 2/N * np.abs(Af[:N/2])[1:])
-    plt.xlim(0,10)
-    plt.xlabel("Frequency")
+    plt.xlim(0,2)
+    plt.xlabel("Frequency (MHz)")
     plt.title("DFT of Particles Detected")
     
     st.set_y(1.0)
@@ -387,7 +411,7 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     plot3 = plt.subplot(3,1,3)
     plt.plot(t,AD)
     plt.ylabel("$N_D$")
-    plt.xlabel("Time")
+    plt.xlabel("Time ($\mu$s)")
     plt.title("Particles Detected vs. Time")
     plt.tight_layout()
     
@@ -409,9 +433,9 @@ def plotCombined(AD,save_title,datax,datasig,stitle):
     Af = fft(AD)
 #    print(np.abs(Af[:N/2])[1:])
     plt.plot(tf[1:], 2/N * np.abs(Af[:N/2])[1:])
-    plt.xlim(0,5)
+    plt.xlim(0,2)
 #    plt.ylim(0,5)
-    plt.xlabel("Frequency")
+    plt.xlabel("Frequency (MHz)")
     plt.title("DFT of Particles Detected")
     
     st.set_y(1.0)
